@@ -29,7 +29,6 @@
             [subscriber sendNext:[UIImage imageWithData:data]];
             [subscriber sendCompleted];
         }
-        
     }];
     
     RACSignal *firstSignalMapped = [firstSignal catch:^RACSignal *(NSError *error) {
@@ -63,5 +62,7 @@
         [self.imageView performSelector:@selector(startAnimating) withObject:nil afterDelay:1.5];
     }];
 }
-
+-(void)viewDidDisappear:(BOOL)animated {
+    [[UIApplication sharedApplication]setNetworkActivityIndicatorVisible:NO];
+}
 @end

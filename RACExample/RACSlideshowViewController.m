@@ -8,7 +8,7 @@
 
 #import "RACSlideshowViewController.h"
 #import <ReactiveCocoa/ReactiveCocoa.h>
-#import <EXTScope.h>
+#import <ReactiveCocoa/EXTScope.h>
 @interface RACSlideshowViewController ()
 @property (weak, nonatomic) IBOutlet UIImageView *imageView;
 
@@ -19,28 +19,34 @@
 - (void)viewDidLoad{
     [super viewDidLoad];
     ///We are going to load four images, each will be loaded when the preceeding one completes, giving us a slideshow effect. These are all random images from a google search for "piping plover".
-    RACSignal *firstSignal = [RACSignal start:^id(BOOL *success, NSError *__autoreleasing *error) {
+    RACSignal *firstSignal = [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
         [[UIApplication sharedApplication]setNetworkActivityIndicatorVisible:YES];
         NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:@"http://www.fws.gov/plover/graphics/piping_plover.jpg"]];
-        *success = (data != nil);
-        return [UIImage imageWithData:data];
+        if(!data) {
+            [subscriber sendError:[NSError errorWithDomain:@"domain" code:404 userInfo:nil]];
+        }
+        else {
+            [subscriber sendNext:[UIImage imageWithData:data]];
+            [subscriber sendCompleted];
+        }
+        
     }];
-
+    
     RACSignal *firstSignalMapped = [firstSignal catch:^RACSignal *(NSError *error) {
         return [RACSignal empty];
     }];
     
-    RACSignal *secondSignal = [firstSignalMapped sequenceNext:^RACSignal *{
+    RACSignal *secondSignal = [firstSignalMapped then:^RACSignal *{
         NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:@"http://www.jkcassady.com/images/1PIPL707.jpg"]];
         return [RACSignal return:[UIImage imageWithData:data]];
     }];
     
-    RACSignal *thirdSignal = [secondSignal sequenceNext:^RACSignal *{
+    RACSignal *thirdSignal = [secondSignal then:^RACSignal *{
         NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:@"http://m4.i.pbase.com/o6/21/832521/1/126531614.sfZPR2Eb.PipingPloverBaby.jpg"]];
         return [RACSignal return:[UIImage imageWithData:data]];
     }];
     
-    RACSignal *fourthSignal = [thirdSignal sequenceNext:^RACSignal *{
+    RACSignal *fourthSignal = [thirdSignal then:^RACSignal *{
         NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:@"http://maineaudubon.org/wp-content/uploads/2013/04/Amanda_Reed__PipingPlover_Chick_3.jpg"]];
         return [RACSignal return:[UIImage imageWithData:data]];
     }];

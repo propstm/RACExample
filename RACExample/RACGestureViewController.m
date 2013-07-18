@@ -9,7 +9,7 @@
 #import "RACGestureViewController.h"
 #import <QuartzCore/QuartzCore.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
-#import <EXTScope.h>
+#import <ReactiveCocoa/EXTScope.h>
 @interface RACGestureViewController ()
 @property(weak, nonatomic) IBOutlet UILabel *translationLabel;
 @property(weak, nonatomic) IBOutlet UILabel *stateLabel;
@@ -99,7 +99,7 @@
         return resetTransform;
     }];
     ///Adds the animation to the layer each time the gesture ends.
-    [self.view.layer rac_liftSelector:@selector(addAnimation:forKey:) withObjects:originalTransform, @"transform"];
+    [self.view.layer rac_liftSelector:@selector(addAnimation:forKey:) withSignals:originalTransform, [RACSignal return:@"transform"],nil];
     ///Used to bring the animation delegate into the RAC world.
     self.animationDelegate = [RACSubject subject];
     ///When the signal sends a YES value, return the identity transform.

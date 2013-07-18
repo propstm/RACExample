@@ -34,7 +34,7 @@
     ///ReactiveCocoa
     self.delegateSubject = [RACSubject subject]; ///RACSubjects are useful for bridging the gap between the normal world of Objective-C and ReactiveCocoa.
     ///We lift the selector into the RAC world, and it will be invoked every time the delegate subject sends a new value.
-    [self rac_liftSelector:@selector(performSegueWithIdentifier:sender:) withObjects:self.delegateSubject, nil];
+    [self rac_liftSelector:@selector(performSegueWithIdentifier:sender:) withSignals:self.delegateSubject, [RACSignal return:nil], nil];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {

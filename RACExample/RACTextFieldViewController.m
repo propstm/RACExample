@@ -10,7 +10,7 @@
 
 #import "RACTextFieldViewController.h"
 #import <ReactiveCocoa/ReactiveCocoa.h>
-#import <EXTScope.h>
+#import <ReactiveCocoa/EXTScope.h>
 
 @interface RACTextFieldViewController () <UITextFieldDelegate>
 @property(weak, nonatomic) IBOutlet UITextField *nameField;
@@ -70,11 +70,16 @@
     ///A RACCommand is used for buttons in place of adding target actions. In this case, we only want the command to be able to execute if the correctnessSignal returns true.
     RACCommand *command = [RACCommand commandWithCanExecuteSignal:correctnessSignal];
     ///Here we return a signal block that execute a network request on a background thread. If the success parameter is set = NO, then the error will be sent.
-    RACSignal *comnandSignal = [command addSignalBlock:^RACSignal *(id value) {
-        return [RACSignal start:^id(BOOL *success, NSError *__autoreleasing *error) {
-           NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:@"https://farm9.staticflickr.com/8109/8631724728_48c13f7733_b.jpg"]];
-            *success = (data != nil);
-            return [UIImage imageWithData:data];
+    RACSignal *comnandSignal = [command addActionBlock:^RACSignal *(id value) {
+        return [RACSignal startEagerlyWithScheduler:[RACScheduler scheduler] block:^(id<RACSubscriber> subscriber) {
+            NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:@"https://farm9.staticflickr.com/8109/8631724728_48c13f7733_b.jpg"]];
+            if(!data) {
+                [subscriber sendError:[NSError errorWithDomain:@"Domain" code:404 userInfo:nil]];
+            }
+            else {
+                [subscriber sendNext:[UIImage imageWithData:data]];
+                [subscriber sendCompleted];
+            }
         }];
     }];
     ///Here we catch the error and suppress it, otherwise the signal would complete and the textViews text would never be able to receive a value.
@@ -97,7 +102,7 @@
         [self.passwordField resignFirstResponder];
     }];
     ///We don't want the button to be pressed while the command is executing, so we set its enabledness based on the command's canExecute property. Note that we deliver it on the main thread, since we are binding to a UIKit property.
-    RAC(self.createAccountButton.enabled) = [RACAbleWithStart(command, canExecute) deliverOn:[RACScheduler mainThreadScheduler]];
+    RAC(self.createAccountButton.enabled) = [RACObserve(command, canExecute) deliverOn:[RACScheduler mainThreadScheduler]];
     ///Here we bind the imageView's image property to the signal sent from the command. We flatten it because the commandSignalMapped is a signal of signals, and flattening is the same as merging, so we get one signal that represents the value of all of the signals. Note again the delivery on the main thread.
     RAC(self.imageView.image) = [[commandSignalMapped flatten]deliverOn:[RACScheduler mainThreadScheduler]];
     ///The activityIndicator will be spin while the command is being executed.
@@ -108,7 +113,7 @@
     self.activityIndicatorView.color = [UIColor blackColor];
     self.navigationItem.rightBarButtonItems = @[space, item];
     ///Since we cannot set the activityIndicators animating property directly, we have to invoke its methods as side effects.
-    RACSignal *commandSignal = [RACAble(command, executing) deliverOn:[RACScheduler mainThreadScheduler]];
+    RACSignal *commandSignal = [RACObserve(command, executing) deliverOn:[RACScheduler mainThreadScheduler]];
     [commandSignal subscribeNext:^(NSNumber *x) {
         @strongify(self)
         if(x.boolValue)

@@ -121,10 +121,13 @@
         else
             [self.activityIndicatorView stopAnimating];
     }];
+    ///We want to receive a signal each time the textField delegate method is invoked.
+    ///Agruments from signals are sent as a RACTuple. we want whatever textField that is sent to resign first responder status,
+    ///So we call `[tuple first]` since the textField argument is the first parameter.
+    [[self rac_signalForSelector:@selector(textFieldShouldReturn:) fromProtocol:NSProtocolFromString(@"UITextFieldDelegate")]subscribeNext:^(RACTuple *x) {
+        UITextField *textField = [x first];
+        [textField resignFirstResponder];
+    }];
 }
 
--(BOOL)textFieldShouldReturn:(UITextField *)textField {
-    [textField resignFirstResponder];
-    return YES;
-}
 @end

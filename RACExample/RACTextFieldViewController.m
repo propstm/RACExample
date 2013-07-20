@@ -45,19 +45,19 @@
         return @(value.length > 6 && ![value isEqualToString:@"password"]);
     }];
     ///We want to indicate to the user exactly when each field goes from incorrect to correct, or vice-versa;
-    RAC(self.nameIndicator.image) = [nameSignal map:^id(NSNumber *value) {
+    RAC(self.nameIndicator,image) = [nameSignal map:^id(NSNumber *value) {
         if(value.boolValue)
             return GreenStar;
         else
             return RedStar;
     }];
-    RAC(self.emailIndicator.image) = [emailSignal map:^id(NSNumber *value) {
+    RAC(self.emailIndicator,image) = [emailSignal map:^id(NSNumber *value) {
         if(value.boolValue)
             return GreenStar;
         else
             return RedStar;
     }];
-    RAC(self.passwordIndicator.image) = [passwordSignal map:^id(NSNumber *value) {
+    RAC(self.passwordIndicator,image) = [passwordSignal map:^id(NSNumber *value) {
         if(value.boolValue)
             return GreenStar;
         else
@@ -102,10 +102,10 @@
         [self.passwordField resignFirstResponder];
     }];
     ///We don't want the button to be pressed while the command is executing, so we set its enabledness based on the command's canExecute property. Note that we deliver it on the main thread, since we are binding to a UIKit property.
-    RAC(self.createAccountButton.enabled) = [RACObserve(command, canExecute) deliverOn:[RACScheduler mainThreadScheduler]];
+    RAC(self.createAccountButton,enabled) = RACObserve(command, canExecute);
     ///Here we bind the imageView's image property to the signal sent from the command. We flatten it because the commandSignalMapped is a signal of signals, and flattening is the same as merging, so we get one signal that represents the value of all of the signals. Note again the delivery on the main thread.
-    RAC(self.imageView.image) = [[commandSignalMapped flatten]deliverOn:[RACScheduler mainThreadScheduler]];
-    ///The activityIndicator will be spin while the command is being executed.
+    RAC(self.imageView,image) = [[commandSignalMapped flatten]deliverOn:[RACScheduler mainThreadScheduler]];
+    ///The activityIndicator will spin while the command is being executed.
     self.activityIndicatorView = [[UIActivityIndicatorView alloc]init];
     UIBarButtonItem *item = [[UIBarButtonItem alloc]initWithCustomView:self.activityIndicatorView];
     UIBarButtonItem *space = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
@@ -123,10 +123,8 @@
     }];
 }
 
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+-(BOOL)textFieldShouldReturn:(UITextField *)textField {
     [textField resignFirstResponder];
     return YES;
 }
-
-
 @end

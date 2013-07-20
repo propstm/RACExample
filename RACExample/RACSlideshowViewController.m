@@ -52,17 +52,19 @@
     ///Now we merge all of the signals into a single signal, and then call `-replay` in order to make sure that the images are available when we call `-images.collect` in order to start the slideshow. This ensures that we don't hit the network again once all the request complete.
     RACSignal *images = [[[RACSignal merge:@[firstSignalMapped,secondSignal,thirdSignal,fourthSignal]]deliverOn:[RACScheduler mainThreadScheduler]]replay];
     
-    RAC(self.imageView.image) = images;
+    RAC(self.imageView,image) = images;
     @weakify(self)
     ///When the signal completes we want to gather all of the images into an array and start the slideshow over again.
-    RAC(self.imageView.animationImages) = [images.collect doCompleted:^{
+    RAC(self.imageView,animationImages) = [images.collect doCompleted:^{
         @strongify(self)
         [[UIApplication sharedApplication]setNetworkActivityIndicatorVisible:NO];
         self.imageView.animationDuration = 4;
         [self.imageView performSelector:@selector(startAnimating) withObject:nil afterDelay:1.5];
     }];
+    ///We get a signal that sends a `next` event each time the selector is invoked, so we make sure to set turn off the network activty indicator when it is.
+    [[self rac_signalForSelector:@selector(viewDidDisappear:)]subscribeNext:^(id x) {
+        [[UIApplication sharedApplication]setNetworkActivityIndicatorVisible:NO];
+    }];
 }
--(void)viewDidDisappear:(BOOL)animated {
-    [[UIApplication sharedApplication]setNetworkActivityIndicatorVisible:NO];
-}
+
 @end
